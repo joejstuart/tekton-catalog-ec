@@ -27,7 +27,7 @@ spec:
       {
         "components": [
           {
-            "containerImage": "quay.io/hacbs-contract-demo/single-container-app@sha256:84550a596e40024e6ea10ce5aab9ad5b0b91a14cb27161654722ab1d11c70ac2"
+            "containerImage": "quay.io/enterprise-contract-demo/single-container-app@sha256:84550a596e40024e6ea10ce5aab9ad5b0b91a14cb27161654722ab1d11c70ac2"
           }
         ]
       }

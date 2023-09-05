@@ -30,7 +30,7 @@ cp -r "${EC_CLI_REPO_PATH}/tasks" .
 
 pushd tasks > /dev/null
 
-images="$(grep -r -h -o -w 'quay.io/hacbs-contract/ec-cli:.*' | grep -v '@' | sort -u)"
+images="$(grep -r -h -o -w 'quay.io/enterprise-contract/ec-cli:.*' | grep -v '@' | sort -u)"
 
 for image in $images; do
     echo "Resolving image $image"

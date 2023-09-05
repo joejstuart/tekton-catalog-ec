@@ -22,7 +22,7 @@ set -o nounset
 # source variables to test
 ROOT=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
 
-TASK_BUNDLE_REF="${TASK_BUNDLE_REF:-quay.io/hacbs-contract/ec-task-bundle:snapshot}"
+TASK_BUNDLE_REF="${TASK_BUNDLE_REF:-quay.io/enterprise-contract/ec-task-bundle:snapshot}"
 
 TASKRUN=verify-enterprise-contract-taskrun
 TASKRUN_FILE="${TASKRUN}.yaml"
