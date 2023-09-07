@@ -58,7 +58,7 @@ spec:
     env:
       - name: HOME
         value: "$(params.HOMEDIR)"
-  steps: 
+  steps:
     - name: version
       image: quay.io/enterprise-contract/ec-cli:snapshot@sha256:e1b1e677adb9bfd0f186f6a9ae9955bfa4699b3b7698f6ce1b5b93c732cda444
       command: [ec]
