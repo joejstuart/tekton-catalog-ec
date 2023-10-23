@@ -121,12 +121,12 @@ spec:
 
   steps:
     - name: version
-      image: quay.io/enterprise-contract/ec-cli:snapshot@sha256:6cbf27a51d641c3bce25cdaf05af179569e9a03b9c92980c6be1f825073006c4
+      image: quay.io/enterprise-contract/ec-cli:snapshot@sha256:ad3c3c9916475e61411d80e9f1a7bd535e8dac829a78e6d709a895f4b3717870
       command: [ec]
       args:
         - version
     - name: initialize-tuf
-      image: quay.io/enterprise-contract/ec-cli:snapshot@sha256:6cbf27a51d641c3bce25cdaf05af179569e9a03b9c92980c6be1f825073006c4
+      image: quay.io/enterprise-contract/ec-cli:snapshot@sha256:ad3c3c9916475e61411d80e9f1a7bd535e8dac829a78e6d709a895f4b3717870
       script: |-
         set -euo pipefail
 
@@ -142,7 +142,7 @@ spec:
         - name: TUF_MIRROR
           value: "$(params.TUF_MIRROR)"
     - name: validate
-      image: quay.io/enterprise-contract/ec-cli:snapshot@sha256:6cbf27a51d641c3bce25cdaf05af179569e9a03b9c92980c6be1f825073006c4
+      image: quay.io/enterprise-contract/ec-cli:snapshot@sha256:ad3c3c9916475e61411d80e9f1a7bd535e8dac829a78e6d709a895f4b3717870
       command: [ec]
       args:
         - validate
@@ -182,34 +182,39 @@ spec:
           # value expected by Tekton Pipelines. NOTE: If params.SSL_CERT_DIR is empty, the value
           # will contain a trailing ":" - this is ok.
           value: "/tekton-custom-certs:/etc/ssl/certs:/etc/pki/tls/certs:/system/etc/security/cacerts:$(params.SSL_CERT_DIR)"
+        # The EC cache is used to avoid fetching the same image layers from the registry more than
+        # once. However, this is not thread safe. This results in inconsistencies when extracting
+        # files from an image, see https://github.com/enterprise-contract/ec-cli/issues/1109
+        - name: EC_CACHE
+          value: "false"
     - name: report
-      image: quay.io/enterprise-contract/ec-cli:snapshot@sha256:6cbf27a51d641c3bce25cdaf05af179569e9a03b9c92980c6be1f825073006c4
+      image: quay.io/enterprise-contract/ec-cli:snapshot@sha256:ad3c3c9916475e61411d80e9f1a7bd535e8dac829a78e6d709a895f4b3717870
       command: [cat]
       args:
         - "$(params.HOMEDIR)/report.yaml"
     - name: data
-      image: quay.io/enterprise-contract/ec-cli:snapshot@sha256:6cbf27a51d641c3bce25cdaf05af179569e9a03b9c92980c6be1f825073006c4
+      image: quay.io/enterprise-contract/ec-cli:snapshot@sha256:ad3c3c9916475e61411d80e9f1a7bd535e8dac829a78e6d709a895f4b3717870
       command: [cat]
       args:
         - "$(params.HOMEDIR)/data.yaml"
     - name: attestations
-      image: quay.io/enterprise-contract/ec-cli:snapshot@sha256:6cbf27a51d641c3bce25cdaf05af179569e9a03b9c92980c6be1f825073006c4
+      image: quay.io/enterprise-contract/ec-cli:snapshot@sha256:ad3c3c9916475e61411d80e9f1a7bd535e8dac829a78e6d709a895f4b3717870
       command: [cat]
       args:
         - "$(params.HOMEDIR)/attestations.jsonl"
     - name: report-json
-      image: quay.io/enterprise-contract/ec-cli:snapshot@sha256:6cbf27a51d641c3bce25cdaf05af179569e9a03b9c92980c6be1f825073006c4
+      image: quay.io/enterprise-contract/ec-cli:snapshot@sha256:ad3c3c9916475e61411d80e9f1a7bd535e8dac829a78e6d709a895f4b3717870
       command: [cat]
       args:
         - "$(params.HOMEDIR)/report-json.json"
     - name: summary
-      image: quay.io/enterprise-contract/ec-cli:snapshot@sha256:6cbf27a51d641c3bce25cdaf05af179569e9a03b9c92980c6be1f825073006c4
+      image: quay.io/enterprise-contract/ec-cli:snapshot@sha256:ad3c3c9916475e61411d80e9f1a7bd535e8dac829a78e6d709a895f4b3717870
       command: [jq]
       args:
         - "."
         - "$(results.TEST_OUTPUT.path)"
     - name: assert
-      image: quay.io/enterprise-contract/ec-cli:snapshot@sha256:6cbf27a51d641c3bce25cdaf05af179569e9a03b9c92980c6be1f825073006c4
+      image: quay.io/enterprise-contract/ec-cli:snapshot@sha256:ad3c3c9916475e61411d80e9f1a7bd535e8dac829a78e6d709a895f4b3717870
       command: [jq]
       args:
         - "--argjson"
