@@ -47,7 +47,7 @@ spec:
     - name: POLICY_DATA
       type: string
       description: The source containing the policy files.
-      default: git::github.com/enterprise-contract/ec-policies//data
+      default: git::https://github.com/enterprise-contract/ec-policies//example/data
     - name: HOMEDIR
       type: string
       description: Value for the HOME environment variable.
@@ -60,13 +60,13 @@ spec:
         value: "$(params.HOMEDIR)"
   steps:
     - name: version
-      image: quay.io/enterprise-contract/ec-cli:snapshot@sha256:dbda0839a3d013422c6f98f0e83110d7dc1eabfc1c5c1313f28dd46783295ac9
+      image: quay.io/enterprise-contract/ec-cli:snapshot@sha256:aad009778feda4d70993dcd0064fd5712b44752a201892f3d58356fb82af3cca
       command: [ec]
       args:
         - version
     - name: validate
       workingDir: "$(workspaces.output.path)"
-      image: quay.io/enterprise-contract/ec-cli:snapshot@sha256:dbda0839a3d013422c6f98f0e83110d7dc1eabfc1c5c1313f28dd46783295ac9
+      image: quay.io/enterprise-contract/ec-cli:snapshot@sha256:aad009778feda4d70993dcd0064fd5712b44752a201892f3d58356fb82af3cca
       command: [ec]
       args:
         - validate
