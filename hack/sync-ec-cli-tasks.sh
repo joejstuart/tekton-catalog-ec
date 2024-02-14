@@ -25,39 +25,51 @@ set -o pipefail
 set -o nounset
 
 EC_CLI_REPO_PATH="${1}"
+RELEASE_PREFIX="release-v"
 
-cp -r "${EC_CLI_REPO_PATH}/tasks" .
+# helper function to add tasks to a git branch
+add_tasks() {
+  local branch=${1}
+  pushd "${EC_CLI_REPO_PATH}" > /dev/null
+  git checkout "${branch}"
+  popd > /dev/null
+  git checkout -B "${branch}"
+  cp -r "${EC_CLI_REPO_PATH}/tasks" .
+  diff="$(git diff)"
+  if [[ -z "${diff}" ]]; then
+      echo "No changes to sync"
+      exit
+  fi
+  echo "${diff}"
 
-pushd tasks > /dev/null
+  git add tasks
+  git commit -m "sync ec-cli task definitions"
+  git push origin "${branch}"
+}
 
-images="$(grep -r -h -o -w 'quay.io/enterprise-contract/ec-cli:.*' | grep -v '@' | sort -u)"
+# collect remote branches in a repo returning just the branch name
+collect_remotes() {
+  echo "$(git branch -r | grep "${1}/${RELEASE_PREFIX}" | sed "s|${1}/||" | tr -d ' ')"
+}
 
-for image in $images; do
-    echo "Resolving image $image"
-    digest="$(skopeo manifest-digest <(skopeo inspect --raw "docker://${image}"))"
-    pinned_image="${image}@${digest}"
-    echo "↳ ${pinned_image}"
-    find . -type f -exec sed -i "s!${image}!${pinned_image}!g" {} +
-done
 
+tekton_catalog_branches=$(collect_remotes origin)
+pushd "${EC_CLI_REPO_PATH}" > /dev/null
+ec_cli_branches=$(collect_remotes origin)
 popd > /dev/null
 
-diff="$(git diff)"
-if [[ -z "${diff}" ]]; then
-    echo "No changes to sync"
-    exit
-fi
-echo "${diff}"
 
-if [ -n "${GITHUB_ACTIONS:-}" ]; then
-  git config --global user.email "${GITHUB_ACTOR}@users.noreply.github.com"
-  git config --global user.name "${GITHUB_ACTOR}"
-  mkdir -p "${HOME}/.ssh"
-  echo "${DEPLOY_KEY}" > "${HOME}/.ssh/id_ed25519"
-  chmod 600 "${HOME}/.ssh/id_ed25519"
-  trap 'rm -rf "${HOME}/.ssh/id_rsa"' EXIT
-fi
+# sync the main branch
+add_tasks "main"
 
-git add tasks
-git commit -m "sync ec-cli task definitions"
-git push
+# now sync the release branches from ec-cli
+if [ -n "$ec_cli_branches" ]; then
+  while IFS= read -r branch; do
+    if ! echo "$tekton_catalog_branches" | grep -Fxq "$branch"; then
+      echo "Remote branch not present locally: $branch"
+      add_tasks "${branch}"
+    fi
+  done <<< "$ec_cli_branches"
+else
+  echo "No release branches to process."
+fi
