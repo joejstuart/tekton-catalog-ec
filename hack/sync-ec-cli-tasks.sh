@@ -25,39 +25,50 @@ set -o pipefail
 set -o nounset
 
 EC_CLI_REPO_PATH="${1}"
+RELEASE_PREFIX="release-v"
 
-cp -r "${EC_CLI_REPO_PATH}/tasks" .
+# helper function to add tasks to a git branch
+add_tasks() {
+  local remote_branch=${1}
+  local branch=$(echo "$remote_branch" | cut -d'/' -f2)
+  pushd "${EC_CLI_REPO_PATH}" > /dev/null
+  git checkout "${branch}"
+  popd > /dev/null
+  git checkout -B "${branch}" --track "${remote_branch}"
+  cp -r "${EC_CLI_REPO_PATH}/tasks" .
+  diff="$(git diff)"
+  if [[ -z "${diff}" ]]; then
+      echo "No changes to sync"
+      exit
+  fi
 
-pushd tasks > /dev/null
+  git add tasks
+  git commit -m "sync ec-cli task definitions"
+  git push origin "${branch}"
+}
 
-images="$(grep -r -h -o -w 'quay.io/enterprise-contract/ec-cli:.*' | grep -v '@' | sort -u)"
+# collect remote branches in a repo returning just the branch name
+collect_remotes() {
+  echo "$(git branch -r | grep "origin/${RELEASE_PREFIX}" | sed "s|origin/||" | tr -d ' ')"
+}
 
-for image in $images; do
-    echo "Resolving image $image"
-    digest="$(skopeo manifest-digest <(skopeo inspect --raw "docker://${image}"))"
-    pinned_image="${image}@${digest}"
-    echo "↳ ${pinned_image}"
-    find . -type f -exec sed -i "s!${image}!${pinned_image}!g" {} +
-done
-
+tekton_catalog_branches=$(collect_remotes)
+pushd "${EC_CLI_REPO_PATH}" > /dev/null
+ec_cli_branches=$(collect_remotes)
 popd > /dev/null
 
-diff="$(git diff)"
-if [[ -z "${diff}" ]]; then
-    echo "No changes to sync"
-    exit
-fi
-echo "${diff}"
-
-if [ -n "${GITHUB_ACTIONS:-}" ]; then
-  git config --global user.email "${GITHUB_ACTOR}@users.noreply.github.com"
-  git config --global user.name "${GITHUB_ACTOR}"
-  mkdir -p "${HOME}/.ssh"
-  echo "${DEPLOY_KEY}" > "${HOME}/.ssh/id_ed25519"
-  chmod 600 "${HOME}/.ssh/id_ed25519"
-  trap 'rm -rf "${HOME}/.ssh/id_rsa"' EXIT
+# now sync the release branches from ec-cli
+if [ -n "$ec_cli_branches" ]; then
+  while IFS= read -r branch; do
+    if ! echo "$tekton_catalog_branches" | grep -Fxq "$branch"; then
+      add_tasks "origin/main"
+    else
+      add_tasks "origin/${branch}"
+    fi
+  done <<< "$ec_cli_branches"
+else
+  echo "No release branch to process."
 fi
 
-git add tasks
-git commit -m "sync ec-cli task definitions"
-git push
+# sync the main branch
+add_tasks "origin/main"
