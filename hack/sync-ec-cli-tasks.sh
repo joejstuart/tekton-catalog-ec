@@ -26,28 +26,29 @@ set -o nounset
 
 EC_CLI_REPO_PATH="${1}"
 
-cp -r "${EC_CLI_REPO_PATH}/tasks" .
+collect_remotes() {
+  echo "$(git branch --remote --format '%(refname:lstrip=-1)' --sort=refname --list 'origin/release-v*')"
+}
 
-pushd tasks > /dev/null
+# helper function to add tasks to a git branch
+add_tasks() {
+  local branch=${1}
+  local remote_branch=${2}
+  pushd "${EC_CLI_REPO_PATH}" > /dev/null
+  git checkout "${branch}"
+  popd > /dev/null
+  git checkout -B "${branch}" --track "${remote_branch}"
+  cp -r "${EC_CLI_REPO_PATH}/tasks" .
+  diff="$(git diff)"
+  if [[ -z "${diff}" ]]; then
+      echo "No changes to sync"
+      return
+  fi
 
-images="$(grep -r -h -o -w 'quay.io/enterprise-contract/ec-cli:.*' | grep -v '@' | sort -u)"
-
-for image in $images; do
-    echo "Resolving image $image"
-    digest="$(skopeo manifest-digest <(skopeo inspect --raw "docker://${image}"))"
-    pinned_image="${image}@${digest}"
-    echo "↳ ${pinned_image}"
-    find . -type f -exec sed -i "s!${image}!${pinned_image}!g" {} +
-done
-
-popd > /dev/null
-
-diff="$(git diff)"
-if [[ -z "${diff}" ]]; then
-    echo "No changes to sync"
-    exit
-fi
-echo "${diff}"
+  git add tasks
+  git commit -m "sync ec-cli task definitions"
+  git push origin "${branch}"
+}
 
 if [ -n "${GITHUB_ACTIONS:-}" ]; then
   git config --global user.email "${GITHUB_ACTOR}@users.noreply.github.com"
@@ -58,6 +59,17 @@ if [ -n "${GITHUB_ACTIONS:-}" ]; then
   trap 'rm -rf "${HOME}/.ssh/id_rsa"' EXIT
 fi
 
-git add tasks
-git commit -m "sync ec-cli task definitions"
-git push
+tekton_catalog_branches=$(collect_remotes)
+pushd "${EC_CLI_REPO_PATH}" > /dev/null
+ec_cli_branches=$(collect_remotes)
+popd > /dev/null
+
+for branch in ${ec_cli_branches[@]}; do
+    if ! echo "$tekton_catalog_branches" | grep -Fxq "$branch"; then
+      add_tasks "${branch}" "origin/main"
+    else
+      add_tasks "${branch}" "origin/${branch}"
+    fi
+done
+
+add_tasks "main" "origin/main"
