@@ -26,8 +26,22 @@ set -o nounset
 
 EC_CLI_REPO_PATH="${1}"
 
-collect_remotes() {
+collect_remote_branches() {
   echo "$(git branch --remote --format '%(refname:lstrip=-1)' --sort=refname --list 'origin/release-v*')"
+}
+
+# get the ec-cli image each task is using and update with the pinned reference
+update_task_images() {
+  pushd tasks > /dev/null
+  images="$(grep -r -h -o -w 'quay.io/enterprise-contract/ec-cli:.*' | grep -v '@' | sort -u)"
+  for image in $images; do
+    echo "Resolving image $image"
+    digest="$(skopeo manifest-digest <(skopeo inspect --raw "docker://${image}"))"
+    pinned_image="${image}@${digest}"
+    echo "↳ ${pinned_image}"
+    find . -type f -exec sed -i "s!${image}!${pinned_image}!g" {} +
+  done
+  popd > /dev/null
 }
 
 # helper function to add tasks to a git branch
@@ -39,6 +53,7 @@ add_tasks() {
   popd > /dev/null
   git checkout -B "${branch}" --track "${remote_branch}"
   cp -r "${EC_CLI_REPO_PATH}/tasks" .
+  update_task_images
   diff="$(git diff)"
   if [[ -z "${diff}" ]]; then
       echo "No changes to sync"
@@ -59,9 +74,9 @@ if [ -n "${GITHUB_ACTIONS:-}" ]; then
   trap 'rm -rf "${HOME}/.ssh/id_rsa"' EXIT
 fi
 
-tekton_catalog_branches=$(collect_remotes)
+tekton_catalog_branches=$(collect_remote_branches)
 pushd "${EC_CLI_REPO_PATH}" > /dev/null
-ec_cli_branches=$(collect_remotes)
+ec_cli_branches=$(collect_remote_branches)
 popd > /dev/null
 
 for branch in ${ec_cli_branches[@]}; do
