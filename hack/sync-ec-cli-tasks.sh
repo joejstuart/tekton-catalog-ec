@@ -27,6 +27,7 @@ set -o nounset
 EC_CLI_REPO_PATH="${1}"
 
 collect_remote_branches() {
+  git fetch origin > /dev/null
   echo "$(git branch --remote --format '%(refname:lstrip=-1)' --sort=refname --list 'origin/release-v*')"
 }
 
