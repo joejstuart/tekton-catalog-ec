@@ -36,7 +36,7 @@ jobs:
       with:
         repository: joejstuart/ec-cli
         path: ec-cli
-        fetch-depth: 0
+        ref: main
 
     - name: Sync tasks
       run: ./hack/sync-ec-cli-tasks.sh ../ec-cli

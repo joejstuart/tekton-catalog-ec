@@ -27,6 +27,7 @@ set -o nounset
 EC_CLI_REPO_PATH="${1}"
 
 collect_remote_branches() {
+  git fetch origin
   echo "$(git branch --remote --format '%(refname:lstrip=-1)' --sort=refname --list 'origin/release-v*')"
 }
 
@@ -79,8 +80,6 @@ pushd "${EC_CLI_REPO_PATH}" > /dev/null
 ec_cli_branches=$(collect_remote_branches)
 popd > /dev/null
 
-echo "branches"
-echo "${ec_cli_branches[@]}"
 for branch in ${ec_cli_branches[@]}; do
     echo $branch
     # if ! echo "$tekton_catalog_branches" | grep -Fxq "$branch"; then
