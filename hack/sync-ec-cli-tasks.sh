@@ -27,7 +27,6 @@ set -o nounset
 EC_CLI_REPO_PATH="${1}"
 
 collect_remote_branches() {
-  git branch -a
   echo "$(git branch --remote --format '%(refname:lstrip=-1)' --sort=refname --list 'origin/release-v*')"
 }
 
@@ -77,10 +76,12 @@ fi
 
 tekton_catalog_branches=$(collect_remote_branches)
 pushd "${EC_CLI_REPO_PATH}" > /dev/null
+git branch -a
 ec_cli_branches=$(collect_remote_branches)
 popd > /dev/null
 
 for branch in ${ec_cli_branches[@]}; do
+    echo $branch
     if ! echo "$tekton_catalog_branches" | grep -Fxq "$branch"; then
       add_tasks "${branch}" "origin/main"
     else
