@@ -82,11 +82,11 @@ popd > /dev/null
 
 for branch in ${ec_cli_branches[@]}; do
     echo $branch
-    if ! echo "$tekton_catalog_branches" | grep -Fxq "$branch"; then
-      #add_tasks "${branch}" "origin/main"
-    else
-      #add_tasks "${branch}" "origin/${branch}"
-    fi
+    # if ! echo "$tekton_catalog_branches" | grep -Fxq "$branch"; then
+    #   #add_tasks "${branch}" "origin/main"
+    # else
+    #   #add_tasks "${branch}" "origin/${branch}"
+    # fi
 done
 
 add_tasks "main" "origin/main"
