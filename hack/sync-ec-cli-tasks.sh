@@ -27,6 +27,7 @@ set -o nounset
 EC_CLI_REPO_PATH="${1}"
 
 collect_remote_branches() {
+  git branch -a
   echo "$(git branch --remote --format '%(refname:lstrip=-1)' --sort=refname --list 'origin/release-v*')"
 }
 
@@ -62,7 +63,7 @@ add_tasks() {
 
   git add tasks
   git commit -m "sync ec-cli task definitions"
-  git push origin "${branch}"
+  #git push origin "${branch}"
 }
 
 if [ -n "${GITHUB_ACTIONS:-}" ]; then
