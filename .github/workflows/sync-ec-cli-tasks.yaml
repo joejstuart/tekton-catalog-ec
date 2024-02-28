@@ -28,13 +28,14 @@ jobs:
       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         repository: enterprise-contract/tekton-catalog
-        ref: main
+        ref: actions-testing
         path: tekton-catalog
 
     - name: Checkout ec-cli
       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         repository: enterprise-contract/ec-cli
+        ref: main
         path: ec-cli
 
     - name: Sync tasks
