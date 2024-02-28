@@ -76,7 +76,6 @@ fi
 
 tekton_catalog_branches=$(collect_remote_branches)
 pushd "${EC_CLI_REPO_PATH}" > /dev/null
-git branch -a
 ec_cli_branches=$(collect_remote_branches)
 popd > /dev/null
 
