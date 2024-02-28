@@ -34,7 +34,7 @@ jobs:
     - name: Checkout ec-cli
       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
-        repository: enterprise-contract/ec-cli
+        repository: joejstuart/ec-cli
         path: ec-cli
 
     - name: Sync tasks
